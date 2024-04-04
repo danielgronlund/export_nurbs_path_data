@@ -46,18 +46,38 @@ def generate_uniform_knot_vector(degree, num_control_points):
 
     return knot_vector
 
+def generate_periodic_knot_vector(degree, num_control_points):
+    n = num_control_points
+    p = degree
+    
+    total_knots = n + p + 1
+    knot_vector = []
+    
+    for i in range(total_knots):
+        knot_vector.append(i)
+    
+    return knot_vector
+
 def export_nurbs_path_data(filepath):
     data = []
     for obj in bpy.context.scene.objects:
         if obj.type == 'CURVE' and obj.data.dimensions == '3D':
             for spline in obj.data.splines:
                 if spline.type == 'NURBS':
+
+                    is_periodic = spline.use_cyclic_u
+
+                    if is_periodic:
+                        knot_vector = generate_periodic_knot_vector(spline.order_u - 1, len(spline.points))
+                    else:
+                        knot_vector = generate_uniform_knot_vector(spline.order_u - 1, len(spline.points))
+
                     path_data = {
                         "name": obj.name,
                         "type": spline.type,
                         "degree": spline.order_u - 1,
                         "control_points": [list(point.co) for point in spline.points],
-                        "knot_vector": generate_uniform_knot_vector(spline.order_u - 1, len(spline.points))
+                        "knot_vector": knot_vector
                     }
                     data.append(path_data)
 
