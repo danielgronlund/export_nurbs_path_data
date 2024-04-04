@@ -66,8 +66,11 @@ def export_nurbs_path_data(filepath):
                 if spline.type == 'NURBS':
 
                     is_periodic = spline.use_cyclic_u
+                    control_points = [list(point.co) for point in spline.points]
+                    degree = spline.order_u - 1        
 
                     if is_periodic:
+                        control_points = control_points + control_points[:degree]
                         knot_vector = generate_periodic_knot_vector(spline.order_u - 1, len(spline.points))
                     else:
                         knot_vector = generate_uniform_knot_vector(spline.order_u - 1, len(spline.points))
@@ -75,8 +78,8 @@ def export_nurbs_path_data(filepath):
                     path_data = {
                         "name": obj.name,
                         "type": spline.type,
-                        "degree": spline.order_u - 1,
-                        "control_points": [list(point.co) for point in spline.points],
+                        "degree": degree,
+                        "control_points": control_points,
                         "knot_vector": knot_vector
                     }
                     data.append(path_data)
