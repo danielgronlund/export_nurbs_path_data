@@ -30,20 +30,37 @@ class ExportNURBSPathData(Operator, ExportHelper):
         export_nurbs_path_data(self.filepath)
         return {'FINISHED'}
 
+def generate_uniform_knot_vector(degree, num_control_points):
+    n = num_control_points - 1
+    p = degree
+    knot_vector = []
+    
+    for i in range(p + 1):
+        knot_vector.append(0)
+    
+    for i in range(1, n - p + 1):
+        knot_vector.append(i)
+    
+    for i in range(p + 1):
+        knot_vector.append(n - p + 1)
+
+    return knot_vector
+
 def export_nurbs_path_data(filepath):
     data = []
     for obj in bpy.context.scene.objects:
         if obj.type == 'CURVE' and obj.data.dimensions == '3D':
-            if obj.data.splines[0].type == 'NURBS':
-                spline = obj.data.splines[0]
-                path_data = {
-                    "name": obj.name,
-                    "type": spline.type,
-                    "degree": spline.order_u - 1,
-                    "control_points": [point.co[:] for point in spline.points],
-                    "knot_vector": [point.co[0] for point in spline.points]
-                }
-                data.append(path_data)
+            for spline in obj.data.splines:
+                if spline.type == 'NURBS':
+                    path_data = {
+                        "name": obj.name,
+                        "type": spline.type,
+                        "degree": spline.order_u - 1,
+                        "control_points": [list(point.co) for point in spline.points],
+                        "knot_vector": generate_uniform_knot_vector(spline.order_u - 1, len(spline.points))
+                    }
+                    data.append(path_data)
+
     with open(filepath, 'w') as f:
         json.dump(data, f, indent=4)
 
